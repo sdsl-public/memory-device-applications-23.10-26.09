@@ -132,7 +132,7 @@
   let debounce; $('search').addEventListener('input',e=>{clearTimeout(debounce);debounce=setTimeout(()=>{state.search=e.target.value;applyFilters()},120)}); $('reset').onclick=reset;
   new IntersectionObserver(entries=>{if(entries[0].isIntersecting)appendBatch()},{rootMargin:'600px'}).observe($('sentinel'));
 
-  const MANIFEST_URL='./data/publication-manifest.json?v=8498b4069c37821a';
+  const MANIFEST_URL='./data/publication-manifest.json?v=3d453476699325b8';
   const EXPECTED_COLUMNS=['id','title','authors','date','year','venue','url','candidate','technology','topic','doi','titleText'];
   async function getBytes(url, signal) {
     const response=await fetch(url,{signal,credentials:'omit'});
@@ -228,6 +228,8 @@
       const baseNames=Object.fromEntries(VENUES);
       VENUES=VENUES.map(([id,label])=>[id,id==='all'?label:`${label}${data.venueCoverage[id]&&data.venueCoverage[id]!=='NORMAL'?` · ${data.venueCoverage[id]}`:''}`]);
       Object.assign(VENUE_NAMES,baseNames,Object.fromEntries(VENUES));
+      const periodNode=document.getElementById('period-label');
+      if(periodNode) periodNode.textContent=`${data.status||'PROVISIONAL'} · ${data.collectionStart||'2023-10-01'}–${data.collectionCutoff||'2026-09-30'}`;
       restoreUrl(); configureFilters();
       const warningSummary=Object.entries(data.coverageCounts).filter(([status])=>status!=='NORMAL').sort().map(([status,count])=>`${count} ${status}`).join(' · ');
       $('coverage').textContent=`${data.canonicalCount.toLocaleString()} publications · ${Object.keys(data.venueCoverage).length} venues${warningSummary?` · ${warningSummary}`:''}`;
