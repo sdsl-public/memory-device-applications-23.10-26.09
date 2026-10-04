@@ -229,7 +229,7 @@
       VENUES=VENUES.map(([id,label])=>[id,id==='all'?label:`${label}${data.venueCoverage[id]&&data.venueCoverage[id]!=='NORMAL'?` · ${data.venueCoverage[id]}`:''}`]);
       Object.assign(VENUE_NAMES,baseNames,Object.fromEntries(VENUES));
       const periodNode=document.getElementById('period-label');
-      if(periodNode) periodNode.textContent=`${data.status||'PROVISIONAL'} · ${data.collectionStart||'2023-10-01'}–${data.collectionCutoff||'2026-09-30'}`;
+      if(periodNode) periodNode.textContent=`${data.collectionStart||'2023-10-01'}–${data.collectionCutoff||'2026-09-30'}`;
       restoreUrl(); configureFilters();
       const warningSummary=Object.entries(data.coverageCounts).filter(([status])=>status!=='NORMAL').sort().map(([status,count])=>`${count} ${status}`).join(' · ');
       $('coverage').textContent=`${data.canonicalCount.toLocaleString()} publications · ${Object.keys(data.venueCoverage).length} venues${warningSummary?` · ${warningSummary}`:''}`;
