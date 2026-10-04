@@ -91,7 +91,11 @@
       (!q||searchText(p).includes(q))
     );
     shown=0; renderToken++; $('results').textContent=''; $('count').textContent=`${filtered.length.toLocaleString()} ${filtered.length===1?'paper':'papers'}`;
-    appendBatch(renderToken); updateUrl();
+    appendBatch(renderToken);
+    // Return to the number/title start when filters, search, or Reset change.
+    const scrollRegion=$('results-scroll');
+    if(scrollRegion) scrollRegion.scrollLeft=0;
+    updateUrl();
   }
   function appendBatch(token=renderToken) {
     if(token!==renderToken) return;
