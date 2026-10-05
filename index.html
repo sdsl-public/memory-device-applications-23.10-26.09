@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Provisional Literature Census</title>
+  <title>Literature Census</title>
   <style>
     :root { color-scheme: light; --ink:#202124; --muted:#6e7378; --line:#e4e6e8; --link:#275f9b; --active:#202124; }
     * { box-sizing:border-box }
@@ -35,7 +35,10 @@
     .title-line a { grid-column:2; grid-row:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--link); text-decoration:none; font-weight:520 }
     .title-line a:hover { text-decoration:none; opacity:.8 }
     .title-line sub,.title-line sup { font-size:.75em; line-height:0 }
-    .meta { grid-column:2; grid-row:2; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted); font-size:11.5px }
+    .meta { grid-column:2; grid-row:2; min-width:0; display:flex; align-items:center; gap:6px; color:var(--muted); font-size:11.5px }
+    .meta-main { min-width:0; flex:1 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .country-flags { flex:0 0 auto; margin-left:auto; display:inline-flex; align-items:center; gap:3px; padding-left:3px; white-space:nowrap; cursor:help; user-select:none }
+    .country-flag { display:block; width:16px; height:12px; object-fit:cover; border-radius:1px; box-shadow:0 0 0 1px rgba(32,33,36,.14) }
     .tag { color:#58616a }
     #sentinel { height:1px }
     .loading,.empty { padding:20px 0; color:var(--muted) }
@@ -51,7 +54,7 @@
       .results-scroll { width:100%; overflow-x:auto; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch }
       #results { width:max-content; min-width:100% }
       .paper { grid-template-columns:max-content max-content; justify-content:start; column-gap:9.5px }
-      .title-line a,.meta { overflow:visible; text-overflow:clip; max-width:none }
+      .title-line a,.meta-main { overflow:visible; text-overflow:clip; max-width:none }
       #results > .loading,#results > .empty { white-space:normal; max-width:calc(100vw - 28px); overflow-wrap:anywhere }
     }
   </style>
@@ -80,4 +83,4 @@
   </div>
   <div id="sentinel"></div>
 </main>
-<script src="./app.js?v=467d7511615f75dd" defer></script></body></html>
+<script src="./app.js?v=country-svg-flags-v1" defer></script></body></html>

@@ -21,6 +21,7 @@
   // Empty arrays are the explicit "All" state for multi-select groups.
   const state = {scope:'all', venue:[], year:[], technology:'all', topic:[], search:''};
   let papers=[], filtered=[], shown=0, renderToken=0, loading=false;
+  let candidateCountries=new Map();
   const searchCache=new WeakMap();
   function searchText(p) {
     if(!searchCache.has(p)) searchCache.set(p,`${p[11]} ${p[11].replace(/\s+/g,'')} ${p[2].join(' ')} ${p[10]} ${VENUE_NAMES[p[5]]||p[5]}`.toLocaleLowerCase());
@@ -31,6 +32,28 @@
       const u=new URL(String(raw));
       return (u.protocol==='https:'||u.protocol==='http:') ? u.href : '';
     } catch { return ''; }
+  }
+  function candidateFlagNode(p) {
+    const info=candidateCountries.get(p[0]);
+    if(!info||!Array.isArray(info.codes)||!info.codes.length) return null;
+    const wrap=document.createElement('span');
+    wrap.className='country-flags';
+    const names=Array.isArray(info.names)?info.names:[];
+    info.codes.forEach((rawCode,index)=>{
+      const code=String(rawCode||'').toLowerCase();
+      if(!/^[a-z]{2}$/.test(code)) return;
+      const img=document.createElement('img');
+      img.className='country-flag';
+      img.src=`https://cdn.jsdelivr.net/gh/lipis/flag-icons@main/flags/4x3/${code}.svg`;
+      img.width=16; img.height=12; img.loading='lazy'; img.decoding='async';
+      img.alt=names[index]||code.toUpperCase();
+      wrap.appendChild(img);
+    });
+    if(!wrap.childElementCount) return null;
+    const label=names.length?names.join(', '):info.codes.join(', ');
+    wrap.title=`Affiliation countries: ${label}`;
+    wrap.setAttribute('aria-label',wrap.title);
+    return wrap;
   }
   const batchSize=300;
   const TITLE_TAGS = new Set(['SUB','SUP','I','EM']);
@@ -74,7 +97,7 @@
     });
   }
   function configureFilters() {
-    buttons('scope',[['all','All Publications'],['candidates','NVM/PIM Candidates · provisional']],'scope');
+    buttons('scope',[['all','All Publications'],['candidates','NVM/PIM Candidates']],'scope');
     buttons('venue',VENUES,'venue');
     buttons('year',[['all','All'],['2026','2026'],['2025','2025'],['2024','2024'],['2023','2023']],'year');
     const technologies=[...new Set(papers.flatMap(p=>p[8]))].sort();
@@ -119,8 +142,11 @@
       const link=document.createElement('a'); link.appendChild(titleFragment(p[1])); const href=safeLink(p[6]); if(href){link.href=href;link.target='_blank';link.rel='noopener noreferrer'} link.title=p[11];
       title.append(num,link);
       const meta=document.createElement('div'); meta.className='meta'; meta.title=fullAuthors;
-      meta.textContent=`${visibleAuthors} · ${VENUE_NAMES[p[5]]||p[5]} · ${p[3]}`;
-      if(tags.length){const tag=document.createElement('span');tag.className='tag';tag.textContent=` · ${tags.join(' · ')}`;meta.appendChild(tag)}
+      const metaMain=document.createElement('span'); metaMain.className='meta-main';
+      metaMain.textContent=`${visibleAuthors} · ${VENUE_NAMES[p[5]]||p[5]} · ${p[3]}`;
+      if(tags.length){const tag=document.createElement('span');tag.className='tag';tag.textContent=` · ${tags.join(' · ')}`;metaMain.appendChild(tag)}
+      meta.appendChild(metaMain);
+      if(state.scope==='candidates'){const flags=candidateFlagNode(p);if(flags)meta.appendChild(flags)}
       row.append(title,meta); fragment.appendChild(row);
     }
     shown=end; $('results').appendChild(fragment); $('rendered').textContent=shown<filtered.length?`showing ${shown.toLocaleString()}`:'';
@@ -134,6 +160,20 @@
 
   const MANIFEST_URL='./data/publication-manifest.json?v=3d453476699325b8';
   const EXPECTED_COLUMNS=['id','title','authors','date','year','venue','url','candidate','technology','topic','doi','titleText'];
+  const CANDIDATE_COUNTRIES_URL='./data/candidate-countries.json?v=country-svg-flags-v1';
+  async function loadCandidateCountries(signal) {
+    try {
+      const response=await fetch(new URL(CANDIDATE_COUNTRIES_URL,document.baseURI),{signal,credentials:'omit'});
+      if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      const data=await response.json();
+      if(data.schema!==1||data.candidateCount!==4588||!data.papers||typeof data.papers!=='object') throw new Error('unexpected candidate-country schema');
+      candidateCountries=new Map(Object.entries(data.papers));
+    } catch(err) {
+      if(signal && signal.aborted) throw err;
+      console.warn('Candidate country flags unavailable:',err);
+      candidateCountries=new Map();
+    }
+  }
   async function getBytes(url, signal) {
     const response=await fetch(url,{signal,credentials:'omit'});
     if(!response.ok) throw new Error(`${response.status} ${response.statusText}: ${new URL(url,document.baseURI).pathname.split('/').pop()}`);
@@ -230,6 +270,7 @@
       Object.assign(VENUE_NAMES,baseNames,Object.fromEntries(VENUES));
       const periodNode=document.getElementById('period-label');
       if(periodNode) periodNode.textContent=`${data.collectionStart||'2023-10-01'}–${data.collectionCutoff||'2026-09-30'}`;
+      await loadCandidateCountries(controller.signal);
       restoreUrl(); configureFilters();
       const warningSummary=Object.entries(data.coverageCounts).filter(([status])=>status!=='NORMAL').sort().map(([status,count])=>`${count} ${status}`).join(' · ');
       $('coverage').textContent=`${data.canonicalCount.toLocaleString()} publications · ${Object.keys(data.venueCoverage).length} venues${warningSummary?` · ${warningSummary}`:''}`;
